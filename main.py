@@ -6,6 +6,7 @@ the network and exports it in json.
 from collections.abc import Iterable
 from typing import AsyncIterable, AsyncGenerator, Tuple
 import asyncio
+import json
 from web3 import Web3
 
 # ERC20 ABI for the balanceOf function
@@ -26,8 +27,8 @@ if not w3.is_connected():
 
 
 async def get_user_balances(
-    contract_address: str, user_addresses: Iterable[str]
-) -> AsyncGenerator[Tuple[str, int], None]:
+    contract_address: str, user_addresses: Iterable[str],
+) -> AsyncGenerator[Tuple[str, float], None]:
     """
     Fetch balances for a list of user addresses from an ERC20 contract lazily.
 
@@ -49,24 +50,42 @@ async def get_user_balances(
             balance = contract.functions.balanceOf(
                 Web3.to_checksum_address(user_address)
             ).call()
-            yield user_address, balance/1_000_000
+            yield user_address, balance / 1_000_000
         except Exception as e:
             # Handle any errors (e.g., invalid address, contract issues)
             print(f"Error fetching balance for {user_address}: {e}")
             raise e
 
 
+def user_balance_to_json(user_address : str, balance : float):
+    """Converts user balance to json format"""
+    return {"user_address": user_address, "balance": balance}
+
+
 async def main():
+    # dump to file
+    balances_all = []
     async for balance in get_user_balances(
-        "0x1eA03296FbA1006754014140caFA3807B6B21FC2",
+        '0x1eA03296FbA1006754014140caFA3807B6B21FC2',
         [
-            "0x8A303C86448E043689b60f29aEeCEb73ac3E79D9",
-            "0x17Df8A46B8e3f32E8EcdB8e0EEAd515dB427fe74",
-            "0x77C8A535eB970F13717501D5Bc8D4dCe69E949DC",
-            "0x9747da9F31c5C80E637619B6386DdB7ff4a6de87",
+            '0x8A303C86448E043689b60f29aEeCEb73ac3E79D9',
+            '0x17Df8A46B8e3f32E8EcdB8e0EEAd515dB427fe74',
+            '0x77C8A535eB970F13717501D5Bc8D4dCe69E949DC',
+            '0x9747da9F31c5C80E637619B6386DdB7ff4a6de87',
         ],
     ):
+
+        balances_all.append(balance)
+
         print(balance)
+
+    with open("balances.json", "w") as f:
+        balances_all = [user_balance_to_json(*balance) for balance in balances_all]
+        print(balances_all)
+        json.dump(balances_all, f, indent=4)
+
+
+
 
 
 if __name__ == "__main__":
