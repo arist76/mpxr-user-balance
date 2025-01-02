@@ -3,8 +3,7 @@ A Standalone module that generates a list of all users and their balances on
 the network and exports it in json.
 """
 
-from collections.abc import Generator, Iterable
-from typing import AsyncGenerator, Dict, Tuple, Union
+from typing import Dict, Generator, Union
 import asyncio
 import json
 from web3 import Web3
@@ -97,10 +96,13 @@ async def main():
                 "onchain_balance": balance,
             }
         )
-        with open("balances.json", "w") as f:
-            json.dump(balances_all, f, indent=4)
 
-        print(f"{user['user']:<15}{balance:<15.2f}{user['mpxr']:<15.2f}{user['mpxr'] - balance:<15.12f}")
+        print(
+            f"{user['user']:<15}{balance:<15.2f}{user['mpxr']:<15.2f}{user['mpxr'] - balance:<15.12f}"
+        )
+
+    with open("balances.json", "w") as f:
+        json.dump(balances_all, f, indent=4)
 
 
 if __name__ == "__main__":
